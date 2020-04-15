@@ -22,26 +22,25 @@ class MonteCarlo:
         newboard = deepcopy(board)
         root = Node(newboard, None, color, None)
 
-        # 考虑时间限制
-        def whileFunc(node):
-            while True:
-                # mcts four steps
-                # selection,expantion
-                expand_node = self.tree_policy(node, color)
-                # simulation
-                reward = self.default_policy(expand_node)
-                # Backpropagation
-                self.backup(expand_node, reward)                
-        
+        # 考虑时间限制        
         try:
             # 测试程序规定每一步在60s以内
-            func_timeout(59, whileFunc, args=[root]) 
+            func_timeout(19, self.whileFunc, args=[root]) 
         except FunctionTimedOut:
             pass
 
         return self.best_child(root, math.sqrt(2), color).prevAction
 
     
+    def whileFunc(self, root):
+        while True:
+            # mcts four steps
+            # selection,expantion
+            expand_node = self.tree_policy(root)
+            # simulation
+            reward = self.default_policy(expand_node)
+            # Backpropagation
+            self.backup(expand_node, reward)        
 
     def expand(self, node):
         """ 
@@ -72,31 +71,28 @@ class MonteCarlo:
         # 返回bestValue最大的元素
         return sortedChildren[0]
 
-    def tree_policy(self, node, color):
+    def tree_policy(self, node):
         """
         传入当前需要开始搜索的节点（例如根节点）
         根据exploration/exploitation算法返回最好的需要expend的节点
         注意如果节点是叶子结点直接返回。
-
-        基本策略是先找当前未选择过的子节点，如果有多个则随机选。
-        如果都选择过就找权衡过exploration/exploitation的UCB值最大的，如果UCB值相等则随机选。
         """
-        while not node.isover:
-            if len(node.unvisitActions)>0:
+        retNode = node
+        while not retNode.isover:
+            if len(retNode.unvisitActions)>0:
                 # 还有未展开的节点
-                sub_node = expand(node)
-                return sub_node
+                return self.expand(retNode)
             else:
-                if len(node.actions)==0:
-                    newBoard = deepcopy(node.board)
-                    newColor = 'X' if node.color=='O' else 'O'
-                    newNode = Node(newBoard,node,newColor,None)
-                    node.children.append(newNode)
+                if len(retNode.actions)==0:
+                    newBoard = deepcopy(retNode.board)
+                    newColor = 'X' if retNode.color=='O' else 'O'
+                    newNode = Node(newBoard,retNode,newColor,None)
+                    retNode.children.append(newNode)
                     return newNode
-                # 选择ucb最大的
-                node = self.best_child(node, math.sqrt(2), color)
+                # 选择val最大的
+                retNode = self.best_child(retNode, math.sqrt(2), retNode.color)
 
-        return node
+        return retNode
 
     def default_policy(self, node):
         """
@@ -108,7 +104,13 @@ class MonteCarlo:
         """
         newBoard = deepcopy(node.board)
         newColor = node.color
-        while not node.isover:
+
+        def gameover(board):
+            l1 = list(board.get_legal_actions('X'))
+            l2 = list(board.get_legal_actions('O'))
+            return len(l1)==0 and len(l2)==0
+
+        while not gameover(newBoard):
             actions = list(newBoard.get_legal_actions(newColor))
             if len(actions)>0:
                 action = random.choice(actions)

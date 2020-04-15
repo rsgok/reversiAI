@@ -4,7 +4,7 @@ from player import HumanPlayer, RandomPlayer
 from AIPlayer import AIPlayer
 
 # 人类玩家黑棋初始化
-black_player = HumanPlayer("X")
+black_player = RandomPlayer("X")
 
 # AI玩家白棋初始化
 white_player = AIPlayer("O")
