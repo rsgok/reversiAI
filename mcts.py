@@ -25,7 +25,7 @@ class MonteCarlo:
         # 考虑时间限制        
         try:
             # 测试程序规定每一步在60s以内
-            func_timeout(19, self.whileFunc, args=[root]) 
+            func_timeout(59, self.whileFunc, args=[root]) 
         except FunctionTimedOut:
             pass
 
@@ -38,7 +38,7 @@ class MonteCarlo:
             # selection,expantion
             expand_node = self.tree_policy(root)
             # simulation
-            reward = self.default_policy(expand_node)
+            reward = self.default_policy(expand_node.board, expand_node.color)
             # Backpropagation
             self.backup(expand_node, reward)        
 
@@ -52,7 +52,10 @@ class MonteCarlo:
 
         # 执行action，得到新的board
         newBoard = deepcopy(node.board)
-        newBoard._move(action, node.color)
+        if action != "noway":
+            newBoard._move(action, node.color)
+        else:
+            pass
 
         newColor = 'X' if node.color=='O' else 'O'
         newNode = Node(newBoard,node,newColor,action)
@@ -83,18 +86,12 @@ class MonteCarlo:
                 # 还有未展开的节点
                 return self.expand(retNode)
             else:
-                if len(retNode.actions)==0:
-                    newBoard = deepcopy(retNode.board)
-                    newColor = 'X' if retNode.color=='O' else 'O'
-                    newNode = Node(newBoard,retNode,newColor,None)
-                    retNode.children.append(newNode)
-                    return newNode
                 # 选择val最大的
                 retNode = self.best_child(retNode, math.sqrt(2), retNode.color)
 
         return retNode
 
-    def default_policy(self, node):
+    def default_policy(self, board, color):
         """
         蒙特卡罗树搜索的Simulation阶段
         输入一个需要expand的节点，随机操作后创建新的节点，返回新增节点的reward。
@@ -102,8 +99,8 @@ class MonteCarlo:
 
         基本策略是随机选择Action。
         """
-        newBoard = deepcopy(node.board)
-        newColor = node.color
+        newBoard = deepcopy(board)
+        newColor = color
 
         def gameover(board):
             l1 = list(board.get_legal_actions('X'))
@@ -112,10 +109,17 @@ class MonteCarlo:
 
         while not gameover(newBoard):
             actions = list(newBoard.get_legal_actions(newColor))
-            if len(actions)>0:
+            if len(actions) == 0:
+                action = None
+            else:
                 action = random.choice(actions)
+            
+            if action is None:
+                pass
+            else:
                 newBoard._move(action, newColor)
-            newColor = 'X' if node.color=='O' else 'O'
+            
+            newColor = 'X' if newColor=='O' else 'O'
         
         # 0黑 1白 2平局
         winner, diff = newBoard.get_winner()

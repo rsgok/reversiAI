@@ -9,9 +9,10 @@ class Node:
         self.board = board # 游戏选择这个Node的时的棋盘
         self.color = color # 当前玩家
         self.prevAction = action # 到达这个节点的action
-        self.actions = list(board.get_legal_actions(self.color)) # 所有的legal actions
-        self.unvisitActions = list(board.get_legal_actions(self.color)) # 未访问过的actions
+        self.unvisitActions = list(board.get_legal_actions(color)) # 未访问过的actions
         self.isover = self.gameover(board) # 是否结束了
+        if (self.isover == False) and (len(self.unvisitActions) == 0): # 没得走了但游戏还没结束
+            self.unvisitActions.append("noway")
 
         self.reward = {'X': 0, 'O': 0}
         self.bestVal = {'X': 0, 'O': 0}
@@ -21,10 +22,10 @@ class Node:
         l2 = list(board.get_legal_actions('O'))
         return len(l1)==0 and len(l2)==0
 
-    def add_child(self, sub_node):
-        sub_node.set_parent(self)
-        self.children.append(sub_node)
-
     def calcBestVal(self, balance, color):
-        self.bestVal[color] = self.reward[color] / self.visit_times + \
-            balance * sqrt(2 * log(self.parent.visit_times) / self.visit_times)
+        if self.visit_times==0:
+            print("-------------------------")
+            print("oops!visit_times==0!")
+            self.board.display()
+            print("-------------------------")
+        self.bestVal[color] = self.reward[color] / self.visit_times + balance * sqrt(2 * log(self.parent.visit_times) / self.visit_times)

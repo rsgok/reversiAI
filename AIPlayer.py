@@ -1,4 +1,5 @@
 from mcts import MonteCarlo
+# import UCT_Search 
 
 class AIPlayer:
     """
@@ -29,6 +30,7 @@ class AIPlayer:
 
         mcts = MonteCarlo()
         action = mcts.search(board, self.color)
+        # action = UCT_Search.UCTSearch(board, self.color)
         # ------------------------------------------------------------------------
 
         return action
